@@ -1,0 +1,66 @@
+Arduino-based logic for controlling a car with obstacle detection
+#define TRIG_PIN 9  // Pin connected to the trigger pin of the ultrasonic sensor
+#define ECHO_PIN 10 // Pin connected to the echo pin of the ultrasonic sensor
+#define MOTOR_PIN 5 // Pin connected to the motor control (can use PWM)
+
+const int thresholdDistance = 20; // Threshold distance in cm
+
+bool carRunning = false;
+
+// Function to start the car
+void startCar() {
+  carRunning = true;
+  analogWrite(MOTOR_PIN, 255); // Set motor to full speed (adjust as needed)
+  Serial.println("Car is running.");
+}
+
+// Function to stop the car
+void stopCar() {
+  carRunning = false;
+  analogWrite(MOTOR_PIN, 0); // Stop the motor
+  Serial.println("Car has stopped.");
+}
+
+// Function to measure distance using the ultrasonic sensor
+float getDistance() {
+  digitalWrite(TRIG_PIN, LOW);
+  delayMicroseconds(2);
+  digitalWrite(TRIG_PIN, HIGH);
+  delayMicroseconds(10);
+  digitalWrite(TRIG_PIN, LOW);
+
+  // Measure the duration of the echo signal
+  long duration = pulseIn(ECHO_PIN, HIGH);
+
+  // Convert duration to distance in cm
+  float distance = duration * 0.034 / 2; 
+  Serial.print("Detected distance: ");
+  Serial.print(distance);
+  Serial.println(" cm");
+  return distance;
+}
+
+void setup() {
+  pinMode(TRIG_PIN, OUTPUT);
+  pinMode(ECHO_PIN, INPUT);
+  pinMode(MOTOR_PIN, OUTPUT);
+
+  Serial.begin(9600); // Initialize serial communication for debugging
+
+  startCar(); // Start the car at the beginning
+}
+
+void loop() {
+  if (carRunning) {
+    float distance = getDistance(); // Get the measured distance
+
+    if (distance <= thresholdDistance) {
+      Serial.println("Obstacle detected! Stopping the car.");
+      stopCar();
+    } else {
+      Serial.println("No obstacle detected. Car continues to run.");
+    }
+    delay(1000); // Wait for 1 second between checks
+  }
+}
+
